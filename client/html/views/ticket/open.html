@@ -1,0 +1,12 @@
+<h4>All Open Tickets</h4>
+
+<div class="list-group">
+	<a href="#" class="list-group-item" ui-sref="ticket.details({ id : ticket._id })" ng-repeat="ticket in _.where(tickets, { open : true })">
+		<h4 class="list-group-item-heading">
+			{{ ticket.firstname }} {{ ticket.lastname }}
+		</h4>
+		<p class="list-group-item-text">
+			{{ ticket.description.slice(0, 100) }}
+		</p>
+	</a>	
+</div>

@@ -1,0 +1,30 @@
+<nav class="navbar navbar-inverse navbar-static-top">
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-8 col-sm-offset-2 no-padding">
+				<ul class="nav navbar-nav">
+					<li>
+						<a href="" ui-sref=".opened">Open Issues</a>
+						<span class="notify badge badge-open" ng-if="_.where(tickets, { open : true}).length > 0">
+							{{ _.where(tickets, { open : true}).length }}
+						</span>
+					</li>
+					<li>
+						<a href="" ui-sref=".closed">Closed Issues</a>
+
+						<span class="notify badge badge-closed" ng-if="_.where(tickets, { open : false}).length > 0">
+							{{ _.where(tickets, { open : false}).length }}
+						</span>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</nav>
+<div class="container">
+	<div class="row">
+		<div class="col-sm-8 col-sm-offset-2 bleach" style="padding-bottom:15px">
+			<div ui-view></div>
+		</div>
+	</div>
+</div>

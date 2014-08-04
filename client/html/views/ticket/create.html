@@ -1,0 +1,17 @@
+<h4>
+	Create Ticket
+</h4>
+<form novalidate class="create-ticket-form" ng-controller="TicketController">
+
+	<div style="width:49%" class="pull-left">
+		<input type="text" ng-model="firstname" class="form-control" placeholder="First Name" />
+	</div>
+
+	<div style="width:49%" class="pull-right">
+		<input type="text" ng-model="lastname" class="form-control" placeholder="Last Name" />
+	</div>
+
+	<select ng-options="deploy.name for deploy in deploys" class="form-control" style="margin:10px 0px">
+		<option>--- Select a Location ---</option>
+	</select>
+</form>

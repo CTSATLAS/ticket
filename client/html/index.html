@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>ATLAS Ticket System</title>
+
+	<script src="/bower_components/jquery/dist/jquery.min.js"></script>
+	<script src="/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+
+	<script src="/bower_components/angular/angular.min.js"></script>
+	<script src="/bower_components/angular-ui-router/release/angular-ui-router.min.js"></script>
+
+	<script src="/socket.io/socket.io.js"></script>
+
+	<script src="/bower_components/underscore/underscore.js"></script>
+
+	<link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.min.css" />
+	<link rel="stylesheet" href="/css/style.css" />
+
+	<link rel="stylesheet" href="/bower_components/font-awesome/css/font-awesome.min.css" />
+</head>
+<body ng-app="app">
+	<div class="container space">
+		<div class="row">
+			<div class="col-sm-8 col-sm-offset-2 bleach">
+				<h1 class="page-title">ATLAS Ticket System</h1>
+			</div>
+		</div>
+	</div>
+
+	<div ui-view></div>
+<script>
+var app = angular.module('app', ['ui.router']);
+
+// Lets us use underscore in angular
+app.run(function($rootScope){
+	$rootScope._ = _;
+});
+
+app.config(function($stateProvider){
+	$stateProvider
+	.state('ticket', {
+		url : '/ticket',
+		templateUrl : '/html/views/ticket/index.html',
+		controller : 'TicketController'
+	})
+	.state('ticket.opened', {
+		url : '/opened',
+		templateUrl : '/html/views/ticket/open.html'
+	})
+	.state('ticket.closed', {
+		url : '/closed',
+		templateUrl : '/html/views/ticket/closed.html'
+	})
+	.state('ticket.details', {
+		url : '/details',
+		templateUrl : '/html/views/ticket/details.html'
+	});
+});
+
+app.filter('nl2br', function($filter, $sce){
+	return function(data) {
+		if (!data) return data;
+
+		var newHtml = data.replace(/\n\r?/g, '<br />');
+
+		return $sce.trustAsHtml(newHtml);
+	};
+});
+
+// Allows us to use socket.io in our controllers
+app.factory('socket', function($rootScope){
+	var socket = io.connect('http://localhost:2028');
+	console.log('connected');
+	return {
+		on : function(eventName, callback) {
+			socket.on(eventName, function(){
+				var args = arguments;
+				$rootScope.$apply(function(){
+					callback.apply(socket, args);
+				});
+			});
+		},
+		emit: function (eventName, data, callback) {
+			socket.emit(eventName, data, function () {
+				var args = arguments;
+				$rootScope.$apply(function() {
+					if (callback) {
+						callback.apply(socket, args);
+					}
+				});
+			});
+		}
+	};
+})
+</script>
+<script src="/js/TicketController.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
