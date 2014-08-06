@@ -15,7 +15,14 @@ var ticket_schema = mongoose.Schema({
 	user_id : Number,
 	location : String,
 	viewed : { type : Boolean, default : false },
-	open : { type : Boolean, default : true }
+	open : { type : Boolean, default : true },
+	comments : [{
+		author : String,
+		body : String,
+		created : { type : Date, default : Date.now() }
+	}],
+	opened : { type : Date, default : Date.now() },
+	created : { type : Date, default : Date.now() }
 });
 
 var Ticket = mongoose.model('Ticket', ticket_schema);
@@ -41,34 +48,24 @@ app.get('/ticket/create', function(req, res){
 	});
 });
 
-app.get('/ticket/all', function(req, res){
-	
-	Ticket.find({})
-	.exec(function(err, tickets){
+app.get('/ticket/:id', function(req, res){
+
+	ticket.find(req.query, function(err, tickets){
 		res.send(tickets);
 	});
-});
 
-app.get('/ticket/update', function(req, res){
-	res.send({ success : true, output : 'update'});
-});
-
-app.get('/ticket/delete', function(req, res){
-	res.send({ success : true, output : 'delete'});
 });
 
 io.on('connection', function(socket){
 
-	socket.on('ticket', function(data){
+	socket.on('ticket:get', function(data){
 		Ticket.find({}, function(err, tickets) {
-			socket.emit('ticket', tickets);
+			socket.emit('ticket:get', tickets);
 		});
 	});
 
 	socket.on('ticket:update', function(data){
-		Ticket.update({
-			_id : data._id
-		}, data.data,
+		Ticket.update(data.search, data.update,
 		function(err, rowsAffected, ticket){
 			socket.emit('ticket:update', ticket);
 		});
@@ -87,6 +84,14 @@ io.on('connection', function(socket){
 			open : false
 		}, function(err, rowsAffected, ticket){
 			io.sockets.emit('ticket:resolved', ticket);
+		});
+	});
+
+	socket.on('ticket:addComment', function(data){
+		Ticket.find({ _id : data.search._id }, function(err, ticket){
+			console.log(ticket.comments);
+			ticket.comments.push(data.update.comment);
+			ticket.save();
 		});
 	});
 });

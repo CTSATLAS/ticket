@@ -17,6 +17,8 @@
 	<link rel="stylesheet" href="/css/style.css" />
 
 	<link rel="stylesheet" href="/bower_components/font-awesome/css/font-awesome.min.css" />
+
+
 </head>
 <body ng-app="app">
 	<div class="container space">
@@ -41,7 +43,19 @@ app.config(function($stateProvider){
 	.state('ticket', {
 		url : '/ticket',
 		templateUrl : '/html/views/ticket/index.html',
-		controller : 'TicketController'
+		controller : 'TicketController',
+		resolve : {
+			tickets : function($q, socket) {
+				var defer = $q.defer();
+
+				socket.emit('ticket:get');
+				socket.on('ticket:get', function(tickets){
+					defer.resolve(tickets);
+				});
+
+				return defer.promise;
+			}
+		}
 	})
 	.state('ticket.opened', {
 		url : '/opened',
@@ -52,8 +66,58 @@ app.config(function($stateProvider){
 		templateUrl : '/html/views/ticket/closed.html'
 	})
 	.state('ticket.details', {
-		url : '/details',
-		templateUrl : '/html/views/ticket/details.html'
+		url : '/details/:id',
+		templateUrl : '/html/views/ticket/details.html',
+		controller : function($scope, $stateParams, $location, $anchorScroll, Ticket) {
+
+			$scope.ticket = _.findWhere($scope.$parent.tickets, { _id : $stateParams.id });
+
+			$scope.scrollToBottom = function() {
+				$location.hash('add-comment');
+				$anchorScroll(function(){
+					$('textarea').focus();
+				});
+			};
+
+			$scope.markUnviewed = function() {
+				$scope.ticket.viewed = false;
+				Ticket.markUnviewed($scope.ticket._id);
+			};
+
+			$scope.toggleViewed = function() {
+				$scope.ticket.viewed = !$scope.ticket.viewed;
+
+				if($scope.ticket.viewed)
+				{
+					Ticket.markViewed($scope.ticket._id);
+				}
+				else
+				{
+					Ticket.markUnviewed($scope.ticket._id);
+				}
+			};
+
+			$scope.markViewed = function() {
+				$scope.ticket.viewed = true;
+				Ticket.markViewed($scope.ticket._id);
+			};
+
+			$scope.markClosed = function() {
+				$scope.ticket.open = false;
+				Ticket.markResolved($scope.ticket._id);
+			};
+
+			$scope.markOpened = function() {
+				$scope.ticket.open = true;
+				$scope.ticket.opened = Date.now();
+				Ticket.markOpened($scope.ticket._id);
+			};
+
+			$scope.addComment = function() {
+				console.log($scope.comment);
+				Ticket.addComment( $scope.ticket._id, 'Joseph Shering', $scope.comment );
+			};
+		}
 	});
 });
 
@@ -67,10 +131,16 @@ app.filter('nl2br', function($filter, $sce){
 	};
 });
 
+app.filter('toDate', function(){
+	return function(string_date) {
+		var date = new Date(string_date);
+		return date;
+	}
+});
+
 // Allows us to use socket.io in our controllers
 app.factory('socket', function($rootScope){
 	var socket = io.connect('http://localhost:2028');
-	console.log('connected');
 	return {
 		on : function(eventName, callback) {
 			socket.on(eventName, function(){

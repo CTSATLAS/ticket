@@ -1,21 +1,68 @@
 angular.module('app')
-.controller('TicketController', function($scope, $http, $stateParams, socket){
-	console.log($stateParams);
-	socket.emit('ticket');
-
-	socket.on('ticket', function(tickets){
-		$scope.tickets = tickets;
-	});
-
-	socket.on('ticket:update', function(ticket){
-		console.log(ticket);
-	});
-
-	$scope.resolve = function(ticket, data) {
-		socket.emit('ticket:update', { _id : ticket._id, data : data});
+.service('Ticket', function(socket){
+	this.init = function(callback) {
+		socket.emit('ticket:get');
+		socket.on('ticket:get', callback);
 	};
 
-	$scope.update = function(_id, data) {
-		socket.emit('ticket:update', { _id : _id, data : data});
+	this.markViewed = function(id) {
+		socket.emit('ticket:update', {
+			search : {
+				_id : id
+			},
+			update : {
+				viewed : true
+			}
+		});
 	};
+
+	this.markUnviewed = function(id) {
+		socket.emit('ticket:update', {
+			search : {
+				_id : id
+			},
+			update : {
+				viewed : false
+			}
+		});
+	};
+
+	this.markResolved = function(id) {
+		socket.emit('ticket:update', {
+			search : {
+				_id : id
+			},
+			update : {
+				open : false
+			}
+		});
+	};
+
+	this.markOpened = function(id) {
+		socket.emit('ticket:update', {
+			search : {
+				_id : id
+			},
+			update : {
+				open : true
+			}
+		});
+	};
+
+	this.addComment = function(id, author, body) {
+		socket.emit('ticket:addComment', {
+			search : {
+				_id : id
+			},
+			update : {
+				comment : {
+					author : author,
+					body : body
+				}
+			}
+		});
+	}
+})
+.controller('TicketController', function($scope, $http, tickets) {
+	$scope.tickets = tickets;
 });
